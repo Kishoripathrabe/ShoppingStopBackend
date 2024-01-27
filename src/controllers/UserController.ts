@@ -434,4 +434,56 @@ export class UserController {
    }));
    res.send(orderObjofArray); 
   }
+
+  static async addFusionOrder(req,res,next){
+    const mongoose = require('mongoose');
+    const Chance = require('chance');
+    const { ObjectId } = require('mongodb');
+
+// MONGO SCHEMA
+    const FusionSchema = new mongoose.Schema({}, { strict: false });
+    const Fusion = mongoose.model('fusion_order',FusionSchema);
+
+// CHANCE IMPLEMENTATION
+    const chance = new Chance();
+    // const random_age = chance.prime({ min: 10, max: 90 });
+    // const random_names = chance.first();
+    const random_toy =chance.animal()+"toy";
+    console.log("req.body.data =>",req.body.data)
+    let cust_id=new ObjectId(req.body.data)
+// // DB
+const newF = new Fusion({
+  product: random_toy,
+  c_id:cust_id 
+});
+const savedFusion = await newF.save();
+
+// // RESULT
+res.send({data:savedFusion})
+console.log(savedFusion);
+  }
+
+  static async addFusionCustomer(req,res,next){
+    const mongoose = require('mongoose');
+    const Chance = require('chance');
+
+// MONGO SCHEMA
+    const FusionSchema = new mongoose.Schema({}, { strict: false });
+    const Fusion = mongoose.model('fusion_customer',FusionSchema);
+
+// CHANCE IMPLEMENTATION
+    const chance = new Chance();
+    // const random_age = chance.prime({ min: 10, max: 90 });
+    const random_names = chance.first();
+
+// DB
+const newF = new Fusion({
+  name: random_names
+});
+const savedFusion = await newF.save();
+
+// RESULT
+res.send({data:savedFusion})
+console.log(savedFusion);
+  }
 }

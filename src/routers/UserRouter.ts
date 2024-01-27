@@ -23,7 +23,8 @@ export class UserRouter {
         this.router.patch('/update/me',auth,UserController.updateMe)
         this.router.patch('/edit/address', auth, UserController.editAddress);
         this.router.patch('/delete/address', auth, UserController.deleteAddress)
-
+        this.router.patch('/add/fusion_customer', UserController.addFusionCustomer);
+        this.router.patch('/add/fusion_order', UserController.addFusionOrder);
     }
     postRoutes() {
         this.router.post('/signup',UserController.signup);

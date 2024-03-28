@@ -61,47 +61,140 @@ export class UserController {
       });
     }
   }
-
   static async getSearchItem(req, res, next) {
-    let searchvalue = req.query.searchvalue;
-    let currentPage = req.query.currentPage;
-    let pageSize = req.query.pageSize;
-   
-   
-    const data = await Product.find({
-      $or: [
-        { name: { $regex: searchvalue, $options: 'i' } }      ],
-    }).skip((currentPage-1)*pageSize).limit(pageSize);
-    const promises = data.map(async (prod: any) => {
+    try {
+      let searchvalue = req.query.searchvalue;
+      console.log("🚀 ~ UserController ~ getSearchItem ~ searchvalue:", searchvalue)
+      let currentPage = req.query.currentPage;
+      console.log("🚀 ~ UserController ~ getSearchItem ~ currentPage:", currentPage)
+      let pageSize = req.query.pageSize;
+      console.log("🚀 ~ UserController ~ getSearchItem ~ pageSize:", pageSize)
       const userID = req.userData.userID;
-      const user = await User.findOne({ _id: userID });
+      console.log("🚀 ~ UserController ~ getSearchItem ~ userID:", userID)
+  
+      const pipeline = [
+        {
+          $match: {
 
-      // wishlist
-      let wishlistProductIds = user.wishlist.map((data) => data.toString());
-      if (wishlistProductIds.includes(prod._id.toString())) {
-        prod.inWishlist = true;
-      }
-      // cart
-      let cartProducts = await Cart.findOne({ _id: user.cart });
-      let cartIdsArr = cartProducts.products.map((data) => {
-        return data.productId.toString();
-      });
-      if (cartIdsArr.includes(prod._id.toString())) {
-        prod.inCart = true;
-      }
-      return prod; // Return the modified product
-    });
+            $or: [
+          
+              { name: { $regex: '', $options: 'i' } }
+          
+            ]
+          
+          }
+        },
+        {
+          $skip: (parseInt(currentPage) - 1) * parseInt(pageSize)
+        },
+        {
+          $limit: parseInt(pageSize)
+        },
 
-    // Wait for all promises to resolve before sending the response
-    Promise.all(promises)
-      .then((modifiedData) => {
-        res.send(modifiedData);
-      })
-      .catch((error) => {
-        console.error("Error processing promises:", error);
-        res.status(500).send({ error: "Internal Server Error" });
-      });
+        {
+          $addFields:{UserId:  new ObjectId(userID)} 
+        },
+
+
+        {
+          $lookup: {
+            from: "users",
+            localField: "UserId",
+            foreignField: "_id",
+            as: "user"
+          }
+        },
+        {
+          $unwind: "$user"
+        },
+        {
+          $project:    {
+            name: 1,
+            price: 1,
+            desc:1,
+            _id:1,
+            picUrl:1,
+            user:1,
+            inWishlist: { $in: ['$_id', '$user.wishlist']  }
+          }
+        },
+        {
+          $lookup: {
+            from: "carts",
+            localField: "user.cart",
+            foreignField: "_id",
+            as: "cartval"
+            }
+        },
+        {
+          $unwind : "$cartval"
+        },
+        {
+          $project: {
+            name: 1,
+            price: 1,
+            picUrl: 1,
+            desc: 1,
+            inWishlist: { $in: ['$_id', '$user.wishlist'] },
+            inCart: {
+              $cond: { if: "$cartval", then: { $in: ['$_id', '$cartval.products.productId'] }, else: false }
+            }
+          }
+        }
+      ];
+  
+      const modifiedData = await Product.aggregate(pipeline);
+      // console.log("🚀 ~ UserController ~ getSearchItem ~ modifiedData:", modifiedData)
+      res.send(modifiedData);
+    } catch (error) {
+      console.error("Error processing promises:", error);
+      res.status(500).send({ error: "Internal Server Error" });
+    }
   }
+  
+  // static async getSearchItem(req, res, next) {
+    
+  //   let searchvalue = req.query.searchvalue;
+  //   let currentPage = req.query.currentPage;
+  //   let pageSize = req.query.pageSize;
+   
+   
+  //   const data = await Product.find({
+  //     $or: [
+  //       { name: { $regex: searchvalue, $options: 'i' } }      ],
+  //   }).skip((currentPage-1)*pageSize).limit(pageSize);
+  //   const promises = data.map(async (prod: any) => {
+  //     const userID = req.userData.userID;
+  //     console.log("🚀 ~ UserController ~ promises ~ userID:", userID)
+  //     const user = await User.findOne({ _id: userID });
+
+  //     // wishlist
+  //     let wishlistProductIds = user.wishlist.map((data) => data.toString());
+  //     if (wishlistProductIds.includes(prod._id.toString())) {
+  //       prod.inWishlist = true;
+  //     }
+  //     // cart
+  //     let cartProducts = await Cart.findOne({ _id: user.cart });
+  //     let cartIdsArr = cartProducts.products.map((data) => {
+  //       return data.productId.toString();
+  //     });
+  //     if (cartIdsArr.includes(prod._id.toString())) {
+  //       prod.inCart = true;
+  //     }
+  //     return prod; // Return the modified product
+  //   });
+
+  //   // Wait for all promises to resolve before sending the response
+  //   Promise.all(promises)
+  //     .then((modifiedData) => {
+  //       console.log("modifiedData", modifiedData);
+  //       res.send(modifiedData);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error processing promises:", error);
+  //       res.status(500).send({ error: "Internal Server Error" });
+  //     });
+  // }
   static async getSearchCount(req,res,next) {
     let searchvalue = req.query.searchvalue;
     const data = await Product.find({
@@ -112,45 +205,97 @@ export class UserController {
    res.send({data:data});
   }
   
+  // static async getAllProducts(req, res, next) {
+  //   Product.find({}, { __v: 0 })
+  //     .then(async (data: any) => {
+  //       // console.log("🚀 ~ UserController ~ .then ~ data:", data)
+  //       // Create an array of promises for each product
+  //       const promises = data.map(async (prod: any) => {
+  //         const userID = req.userData.userID;
+  //         const user = await User.findOne({ _id: userID });
+
+  //         // wishlist
+  //         let wishlistProductIds = user.wishlist.map((data) => data.toString());
+  //         if (wishlistProductIds.includes(prod._id.toString())) {
+  //           prod.inWishlist = true;
+  //         }
+  //         // cart
+  //         let cartProducts = await Cart.findOne({ _id: user.cart });
+  //         let cartIdsArr = cartProducts.products.map((data) => {
+  //           return data.productId.toString();
+  //         });
+  //         if (cartIdsArr.includes(prod._id.toString())) {
+  //           prod.inCart = true;
+  //         }
+  //         return prod; // Return the modified product
+  //       });
+
+  //       // Wait for all promises to resolve before sending the response
+  //       Promise.all(promises)
+  //         .then((modifiedData) => {
+  //           res.send(modifiedData);
+  //         })
+  //         .catch((error) => {
+  //           console.error("Error processing promises:", error);
+  //           res.status(500).send({ error: "Internal Server Error" });
+  //         });
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching products:", error);
+  //       res.status(500).send({ error: "Internal Server Error" });
+  //     });
+  // }
   static async getAllProducts(req, res, next) {
-    Product.find({}, { __v: 0 })
-      .then(async (data: any) => {
-        // console.log("🚀 ~ UserController ~ .then ~ data:", data)
-        // Create an array of promises for each product
-        const promises = data.map(async (prod: any) => {
-          const userID = req.userData.userID;
-          const user = await User.findOne({ _id: userID });
-
-          // wishlist
-          let wishlistProductIds = user.wishlist.map((data) => data.toString());
-          if (wishlistProductIds.includes(prod._id.toString())) {
-            prod.inWishlist = true;
+    try {
+      const userID = req.userData.userID;
+      // console.log("uid",userID);
+      const pipeline = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "userID",
+            foreignField: "_id",
+            as: "user"
           }
-          // cart
-          let cartProducts = await Cart.findOne({ _id: user.cart });
-          let cartIdsArr = cartProducts.products.map((data) => {
-            return data.productId.toString();
-          });
-          if (cartIdsArr.includes(prod._id.toString())) {
-            prod.inCart = true;
+        },
+        {
+          $unwind: "$user" // Unwind to handle the array created by $lookup
+        },
+        {
+          $lookup: {
+            from: "carts",
+            localField: "user.cart",
+            foreignField: "_id",
+            as: "cart"
           }
-          return prod; // Return the modified product
-        });
-
-        // Wait for all promises to resolve before sending the response
-        Promise.all(promises)
-          .then((modifiedData) => {
-            res.send(modifiedData);
-          })
-          .catch((error) => {
-            console.error("Error processing promises:", error);
-            res.status(500).send({ error: "Internal Server Error" });
-          });
-      })
-      .catch((error) => {
-        console.error("Error fetching products:", error);
-        res.status(500).send({ error: "Internal Server Error" });
-      });
+        },
+        {
+          $unwind: {
+            path: "$cart",
+            preserveNullAndEmptyArrays: true // Preserve documents if user has no cart
+          }
+        },
+        {
+          $project: {
+            name: 1,
+            price: 1,
+            inWishlist: {
+              $in: ['$_id', '$user.wishlist']
+            },
+            inCart: {
+              $cond: { if: "$cart", then: { $in: ['$_id', '$cart.products.productId'] }, else: false }
+            }
+          }
+        }
+      ];
+  
+      const modifiedData = await Product.aggregate(pipeline);
+      console.log("🚀 ~ UserController ~ getallprotem ~ modifiedData:", modifiedData)
+      res.send(modifiedData);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      res.status(500).send({ error: "Internal Server Error" });
+    }
   }
 
   static addToWishlist(req, res, next) {
@@ -182,44 +327,124 @@ export class UserController {
       res.send(frontendData);
     });
   }
-  static async getWishlist(req, res, next) {
+  // static async getWishlist(req, res, next) {
+  //   try {
+  //     const userID = req.userData.userID;
+  //     const user = await User.findOne({ _id: userID });
+
+  //     if (!user) {
+  //       return res.status(404).json({ error: "User not found" });
+  //     }
+
+  //     const wishlistProductIds = user.wishlist;
+
+  //     // Use Promise.all to wait for all product queries to complete
+  //     let Products = await Promise.all(
+  //       wishlistProductIds.map(async (productId) => {
+  //         const singleProduct = await Product.findOne({ _id: productId });
+  //         return singleProduct;
+  //       })
+  //     );
+
+  //     const cartId = user.cart;
+
+  //     let cartData=await Cart.findOne({_id:cartId})
+  //     let cartArr=cartData.products;
+  //     let cartIdArr=cartArr.map((prod:any)=>{
+  //       return prod.productId.toString()
+  //     })
+  //     Products= await Promise.all(Products.map(data=>{
+  //       if(cartIdArr.includes(data._id.toString())){
+  //         data.inCart =true;
+  //       }
+  //       return data
+  //     }))
+  //     console.log("🚀 ~ UserController ~ getWishlist ~ Products:", Products)
+  //     res.json(Products);
+  //   } catch (error) {
+  //     console.error("Error fetching wishlist:", error);
+  //     res.status(500).json({ error: "Internal Server Error" });
+  //   }
+    
+  // }
+  static async getWishlist(req,res,next) {
     try {
       const userID = req.userData.userID;
-      const user = await User.findOne({ _id: userID });
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      const wishlistProductIds = user.wishlist;
-
-      // Use Promise.all to wait for all product queries to complete
-      let Products = await Promise.all(
-        wishlistProductIds.map(async (productId) => {
-          const singleProduct = await Product.findOne({ _id: productId });
-          return singleProduct;
-        })
-      );
-
-      const cartId = user.cart;
-
-      let cartData=await Cart.findOne({_id:cartId})
-      let cartArr=cartData.products;
-      let cartIdArr=cartArr.map((prod:any)=>{
-        return prod.productId.toString()
-      })
-      Products= await Promise.all(Products.map(data=>{
-        if(cartIdArr.includes(data._id.toString())){
-          data.inCart =true;
+      console.log("🚀 ~ UserController ~ getWishlist ~ userID:", userID)
+      const pipeline = [
+        {
+          $match:{
+            _id: new ObjectId(userID)
+          }
+        },
+      {
+        $unwind: "$wishlist"
+      },
+      {
+        $lookup:{
+          from: "products",
+          localField: "wishlist",
+          foreignField: "_id",
+          as: "product",
         }
-        return data
-      }))
+      },
+      {
+        $unwind:{
+          path: "$product",
+        }
+      },
+      {
+        $project:{
+          _id: "$product._id",
+          name: "$product.name",
+          desc: "$product.desc",
+          price: "$product.price",
+          picUrl: "$product.picUrl",
+          wishlist: 1,
+          cart: 1
+        }
+      },
+      {
+        $lookup:{
+         from: "carts",
+         localField: "cart",
+         foreignField: "_id",
+         as: "cartval",
+       }
+      },
+      {
+        $unwind:{
+          path: "$cartval",
+        }
+      },
+      {
+        $addFields:{
+          inWishlist: true,
+        }
+      },
+      {
+        $project:{
+          _id: 1,
+          name: 1,
+          desc: 1,
+          price: 1,
+          picUrl: 1,
+          inWishlist: 1,
+          inCart:{
+            $in: ["$_id","$cartval.products.productId"],
+          }
+        }
+      }
+      ]
+      const modifiedData = await User.aggregate(pipeline);      
+      console.log("🚀 ~ UserController ~ getWishlist ~ modifiedData:", modifiedData)
+      res.send(modifiedData);
 
-      res.json(Products);
     } catch (error) {
-      console.error("Error fetching wishlist:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+          console.error("Error fetching wishlist:", error);
+          res.status(500).json({ error: "Internal Server Error" });
     }
+    
   }
 
   static addToCart(req, res, next) {

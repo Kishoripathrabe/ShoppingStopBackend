@@ -140,7 +140,6 @@ export class UserController {
       ];
   
       const modifiedData = await Product.aggregate(pipeline);
-      // console.log("🚀 ~ UserController ~ getSearchItem ~ modifiedData:", modifiedData)
       res.send(modifiedData);
     } catch (error) {
       console.error("Error processing promises:", error);
@@ -161,7 +160,6 @@ export class UserController {
   //   }).skip((currentPage-1)*pageSize).limit(pageSize);
   //   const promises = data.map(async (prod: any) => {
   //     const userID = req.userData.userID;
-  //     console.log("🚀 ~ UserController ~ promises ~ userID:", userID)
   //     const user = await User.findOne({ _id: userID });
 
   //     // wishlist
@@ -183,7 +181,6 @@ export class UserController {
   //   // Wait for all promises to resolve before sending the response
   //   Promise.all(promises)
   //     .then((modifiedData) => {
-  //       console.log("modifiedData", modifiedData);
   //       res.send(modifiedData);
   //     })
   //     .catch((error) => {
@@ -204,7 +201,6 @@ export class UserController {
   // static async getAllProducts(req, res, next) {
   //   Product.find({}, { __v: 0 })
   //     .then(async (data: any) => {
-  //       // console.log("🚀 ~ UserController ~ .then ~ data:", data)
   //       // Create an array of promises for each product
   //       const promises = data.map(async (prod: any) => {
   //         const userID = req.userData.userID;
@@ -244,7 +240,6 @@ export class UserController {
   static async getAllProducts(req, res, next) {
     try {
       const userID = req.userData.userID;
-      // console.log("uid",userID);
       const pipeline = [
         {
           $lookup: {
@@ -286,7 +281,6 @@ export class UserController {
       ];
   
       const modifiedData = await Product.aggregate(pipeline);
-      console.log("🚀 ~ UserController ~ getallprotem ~ modifiedData:", modifiedData)
       res.send(modifiedData);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -355,7 +349,6 @@ export class UserController {
   //       }
   //       return data
   //     }))
-  //     console.log("🚀 ~ UserController ~ getWishlist ~ Products:", Products)
   //     res.json(Products);
   //   } catch (error) {
   //     console.error("Error fetching wishlist:", error);
@@ -366,7 +359,6 @@ export class UserController {
   static async getWishlist(req,res,next) {
     try {
       const userID = req.userData.userID;
-      console.log("🚀 ~ UserController ~ getWishlist ~ userID:", userID)
       const pipeline = [
         {
           $match:{
@@ -433,7 +425,6 @@ export class UserController {
       }
       ]
       const modifiedData = await User.aggregate(pipeline);      
-      console.log("🚀 ~ UserController ~ getWishlist ~ modifiedData:", modifiedData)
       res.send(modifiedData);
 
     } catch (error) {

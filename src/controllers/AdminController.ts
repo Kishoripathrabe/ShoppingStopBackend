@@ -6,7 +6,6 @@ export class AdminController {
 
 
   static addproduct(req,res,next){
-      console.log("product added")
       let userProduct = req.body;
       const newProduct = new Product(userProduct)
       newProduct.save().then(data => {
@@ -30,7 +29,6 @@ export class AdminController {
 
 static  deleteProduct(req,res,next){
   const productId = req.params.id;
-  console.log(productId);
   Product.findOne({ _id : productId }).then(data =>{
     if (!data) {
       return res.json({ error: 'Product not found' });

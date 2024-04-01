@@ -64,13 +64,9 @@ export class UserController {
   static async getSearchItem(req, res, next) {
     try {
       let searchvalue = req.query.searchvalue;
-      console.log("🚀 ~ UserController ~ getSearchItem ~ searchvalue:", searchvalue)
       let currentPage = req.query.currentPage;
-      console.log("🚀 ~ UserController ~ getSearchItem ~ currentPage:", currentPage)
       let pageSize = req.query.pageSize;
-      console.log("🚀 ~ UserController ~ getSearchItem ~ pageSize:", pageSize)
       const userID = req.userData.userID;
-      console.log("🚀 ~ UserController ~ getSearchItem ~ userID:", userID)
   
       const pipeline = [
         {
@@ -471,28 +467,75 @@ export class UserController {
       }
     });
   }
-  static getCartProducts(req, res, next) {
+  // static getCartProducts(req, res, next) {
+  //   let userID = req.userData.userID;
+  //   let updatedCart: any = [];
+  //   User.findOne({ _id: userID }).then(async (userData) => {
+  //     let cartId = userData.cart;
+  //     let orgCart = await Cart.findOne({ _id: cartId });
+  //     let oldproducts = orgCart.products;
+  //     let newproducts = await Promise.all(
+  //       oldproducts.map(async (oldp) => {
+  //         let prodId = oldp.productId;
+  //         let prodQ = oldp.quantity;
+  //         let productdetails = await Product.findOne({ _id: prodId });
+  //         let newObj = {
+  //           _id: prodId,
+  //           quantity: prodQ,
+  //           orgProduct: productdetails,
+  //         };
+  //         return newObj;
+  //       })
+  //     );
+  //     res.send(newproducts);
+  //   });
+  // }
+  static async getCartProducts(req, res, next) {
     let userID = req.userData.userID;
-    let updatedCart: any = [];
-    User.findOne({ _id: userID }).then(async (userData) => {
-      let cartId = userData.cart;
-      let orgCart = await Cart.findOne({ _id: cartId });
-      let oldproducts = orgCart.products;
-      let newproducts = await Promise.all(
-        oldproducts.map(async (oldp) => {
-          let prodId = oldp.productId;
-          let prodQ = oldp.quantity;
-          let productdetails = await Product.findOne({ _id: prodId });
-          let newObj = {
-            _id: prodId,
-            quantity: prodQ,
-            orgProduct: productdetails,
-          };
-          return newObj;
-        })
-      );
-      res.send(newproducts);
-    });
+    const pipeline =  [
+      {
+        '$match': {
+          '_id': new ObjectId(userID)
+        }
+      }, {
+        '$lookup': {
+          'from': 'carts', 
+          'localField': 'cart', 
+          'foreignField': '_id', 
+          'as': 'orgCart'
+        }
+      }, {
+        '$unwind': {
+          'path': '$orgCart'
+        }
+      }, {
+        '$project': {
+          'products': '$orgCart.products'
+        }
+      }, {
+        '$unwind': {
+          'path': '$products'
+        }
+      }, {
+        '$project': {
+          '_id': '$products.productId', 
+          'quantity': '$products.quantity'
+        }
+      }, {
+        '$lookup': {
+          'from': 'products', 
+          'localField': '_id', 
+          'foreignField': '_id', 
+          'as': 'orgProduct'
+        }
+      }, {
+        '$unwind': {
+          'path': '$orgProduct'
+        }
+      }
+    ]
+    const cartProducts = await User.aggregate(pipeline);            
+    res.send(cartProducts); 
   }
   static decreaseQuantity(req,res,next) {
     let productId = req.body.prodId;

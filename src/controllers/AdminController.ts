@@ -2,6 +2,7 @@ import User from "../models/User";
 import * as jwt from "jsonwebtoken";
 import Product from "../models/Product";
 import Order from "../models/Order";
+import UserActivity from "../models/UserActivity";
 export class AdminController {
 
 
@@ -75,5 +76,10 @@ static  deleteProduct(req,res,next){
     const formattedDate = currentDate.toLocaleString('en-US', { timeZone: 'UTC' });
     await Order.findOneAndUpdate({_id: oId},{status:oStatus,final_date: formattedDate},{new:true});
     res.send({msg:"Order Status Updated Successfully"})
+  }
+  static async getActivity(req,res,next) {
+    let userID = req.params.userId;
+    let activities = await UserActivity.find({ userID: userID});
+    res.send({activities});
   }
 }

@@ -26,6 +26,7 @@ export class AdminRouter {
         this.router.get('/get/all/products',adminauth,AdminController.getAllProducts);
         this.router.get('/get/customer/data', adminauth, AdminController.getCustomersData);
         this.router.get('/get/customer/info/:userId', adminauth, AdminController.getCustomersInfo);
+        this.router.get('/get/activity/:userId', auth,AdminController.getActivity );
     }
 }
 

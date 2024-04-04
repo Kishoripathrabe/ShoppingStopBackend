@@ -30,6 +30,7 @@ export class UserRouter {
         this.router.post('/create/address',auth,UserController.addAddress);
         this.router.post('/place/order',auth,UserController.placeOrder);
         this.router.post('/post/rating', auth,UserController.postRating );
+        this.router.post('/add/activity', auth, UserController.addActivity);
     }
     getRoutes() {
         this.router.get('/login',UserController.login);
@@ -46,6 +47,8 @@ export class UserRouter {
         this.router.get('/get/myrating/:prodId', auth,UserController.getMyRating );
         this.router.get('/get/avg/product/rating/:prodId', auth,UserController.getAvgProductRating );
         this.router.get('/get/isproduct/delivered/:prodId', auth,UserController.getIsProductDelivered );  
+        this.router.get('/get/isproduct/delivered/:prodId', auth,UserController.getIsProductDelivered );    
+
     }
 }
 

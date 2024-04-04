@@ -7,6 +7,8 @@ import Order from "../models/Order";
 import Rating from "../models/Rating";
 import {ObjectId} from 'mongodb'
 import mongoose from "mongoose";
+import UserLog from "../models/UserActivity";
+import UserActivity from '../models/UserActivity';
 export class UserController {
   static async signup(req, res) {
     const user = new User({
@@ -747,4 +749,22 @@ export class UserController {
     );
     res.send({msg: "updated successfully"});
   }
+
+  static async addActivity(req,res,next){
+    let userID = req.userData.userID;
+    let data = req.body.data;
+    let msg = req.body.msg;
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleString('en-US', { timeZone: 'UTC' });
+    const userLog = new UserActivity({
+      userID,
+      data,
+      msg,
+      date: formattedDate
+    }); 
+    await userLog.save();
+    res.send({msg: "Activity Saved Successfully"});
+  
+  }
+
 }

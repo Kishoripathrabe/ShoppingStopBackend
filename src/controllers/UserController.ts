@@ -6,7 +6,6 @@ import Address from "../models/Address";
 import Order from "../models/Order";
 import Rating from "../models/Rating";
 import {ObjectId} from 'mongodb'
-import mongoose from "mongoose";
 export class UserController {
   static async signup(req, res) {
     const user = new User({

@@ -5,6 +5,7 @@ import { getEnvironmentVariable } from './environment/environment';
 import UserRouter from './routers/UserRouter';
 import * as cors from 'cors';
 import AdminRouter from './routers/AdminRouter';
+import DemoRouter from './routers/DemoRouter';
 
 
 export class Server {
@@ -37,7 +38,8 @@ export class Server {
 
     setRoutes(){
         this.app.use('/api/user',UserRouter)
-        this.app.use('/api/admin',AdminRouter)
+        this.app.use('/api/admin', AdminRouter)
+        this.app.use('/api/demo', DemoRouter)
 
     }
     error404Handler(){

@@ -1,4 +1,2 @@
-# Ignore node_modules directory
-node_modules/
-# Ignore env
-src/environment/*
+/node_modules
+/src/environment

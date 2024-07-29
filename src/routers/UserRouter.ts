@@ -33,6 +33,7 @@ export class UserRouter {
     }
     getRoutes() {
         this.router.get('/login',UserController.login);
+        this.router.get('/language', auth, UserController.getLanguage);
         this.router.get('/get/all/products',auth, UserController.getAllProducts);
         this.router.get('/get/wishlist',auth, UserController.getWishlist);
         this.router.get('/get/cart/products',auth, UserController.getCartProducts);

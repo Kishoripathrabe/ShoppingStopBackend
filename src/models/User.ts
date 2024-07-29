@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
     cart: { type: mongoose.Types.ObjectId, ref: 'cart' },
     wishlist: [{ type: mongoose.Types.ObjectId, ref: 'product' }],
     address: [{ type: mongoose.Types.ObjectId, ref: 'add' }],
-    type: { type: String ,default:"customer"}
+    type: { type: String, default: "customer" },
+    language: { type: String, default: "en" }
 })   
 
 const User = mongoose.model('User', userSchema);

@@ -8,6 +8,20 @@ import Rating from "../models/Rating";
 import {ObjectId} from 'mongodb'
 import mongoose from "mongoose";
 export class UserController {
+
+
+
+  static async getLanguage(req, res, next) {
+    let userID = req.userData.userID;
+    let user = await User.findOne(
+      { _id: userID }
+    );
+    if (user.language) {
+      return res.send({ language: user.language });
+    }
+    return res.send({ language: 'en' });
+    }
+
   static async signup(req, res) {
     const user = new User({
       first_name: req.body.first_name,
